@@ -2,7 +2,8 @@
 
 import os
 import openai
-
+from typing import List
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv()) # read local .env file
 openai.api_key = os.environ['OPENAI_API_KEY']
@@ -12,6 +13,8 @@ from langchain.schema.output_parser import StrOutputParser
 from langchain.schema.runnable import RunnableMap
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import DocArrayInMemorySearch
+from langchain.utils.openai_functions import convert_pydantic_to_openai_function
+
 
 
 ## Rung prompt on Langchain
@@ -91,3 +94,20 @@ functions = [
 model = ChatOpenAI(temperature=0).bind(functions=functions)
 chain= prompt |model | output_parser
 chain.invoke({"input": "how is the weather in SF airport ?"})
+
+
+#### Pydantic form of function 
+class Triangle(BaseModel):
+    """Call this  functiob to check a tiranlge with side_a, side_b and side_c can form a triangle"""
+    airport_code: str = Field(description="side c of triangle ")
+    side_a: float =Field(description="side a of tirangle ")
+    side_b:float =Field(description="side b of triangle ")
+        
+        
+
+Triangle_function = convert_pydantic_to_openai_function(Triangle)      
+model = ChatOpenAI()
+model_with_function = model.bind(functions=[Triangle_function])
+model_with_function.invoke("hi")
+
+
